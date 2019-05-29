@@ -6,7 +6,7 @@ import numpy as np
 
 if __name__ == "__main__":
     input_path = sys.argv[1]
-    pattern = '!"#$%&()*+,/:;<=>?@[\\]^_`{|}~'
+    pattern = '!"#$%&()*+,/:;<=>?@[\\]^_`{|}~\t\n'
     sentences = [sen.rstrip('\n').translate(str.maketrans('','',pattern)).replace('.',' . ').replace('-',' - ').replace('\'',' \' ') for sen in open(input_path)]
     stop_words = [word for word in stopwords.words('english')]
     tokens = [word.lower().split() for word in sentences]
