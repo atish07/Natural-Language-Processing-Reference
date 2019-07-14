@@ -4,6 +4,8 @@ import nltk
 import numpy as np
 from sklearn import feature_extraction
 from tqdm import tqdm
+from bert_embedding import BertEmbedding
+from scipy import spatial
 
 
 _wnl = nltk.WordNetLemmatizer()
@@ -210,6 +212,7 @@ def hand_features(headlines, bodies):
 
 #Cosine features
 def cosine_features(headlines, bodies):
+    bert_embedding = BertEmbedding()
     body = split_body(bodies)
     body_vector = body_embedding(body)
     headline_vector = headline_embedding(headlines)
@@ -221,7 +224,7 @@ def cosine_features(headlines, bodies):
 
 def split_body(bodies):
     split_body = []
-    for i in range(bodies.shape[0]):
+    for i in range(len(bodies)):
         split_body.append(re.split(r' *[\.\?!,][\'"\)\]]* *',bodies[i]))
     return split_body
 
