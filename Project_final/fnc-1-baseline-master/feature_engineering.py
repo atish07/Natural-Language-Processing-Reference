@@ -207,3 +207,37 @@ def hand_features(headlines, bodies):
 
 
     return X
+
+#Cosine features
+def cosine_features(headlines, bodies):
+    body = split_body(bodies)
+    body_vector = body_embedding(body)
+    headline_vector = headline_embedding(headlines)
+    X = []
+    for i in range(len(body_vector)):
+        X.append(spatial.distance.cosine(headline_vector[i],body_vector[i]))
+    return np.array(X)
+
+
+def split_body(bodies):
+    split_body = []
+    for i in range(bodies.shape[0]):
+        split_body.append(re.split(r' *[\.\?!,][\'"\)\]]* *',bodies[i]))
+    return split_body
+
+def body_embedding(body):
+    res_body_vec = []
+    for para in body:
+        res_body = bert_embedding(para)
+        mat_body = []
+        for i in range(len(res_body)):
+            mat_body.append(np.sum(res_body[i][1],axis=0))
+        res_body_vec.append(np.sum(np.array(mat_body),0).reshape(1,768))
+    return res_body_vec
+
+def headline_embedding(headlines):
+    res_head_vec = []
+    res_head = bert_embedding(headlines)
+    for i in range(len(res_head)):
+        res_head_vec.append(np.sum(res_head[i][1],axis=0).reshape(1,768))
+    return res_head_vec
