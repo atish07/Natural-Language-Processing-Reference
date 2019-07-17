@@ -24,7 +24,8 @@ def generate_features(stances,dataset,name):
     X_polarity = gen_or_load_feats(polarity_features, h, b, "features/polarity."+name+".npy")
     X_hand = gen_or_load_feats(hand_features, h, b, "features/hand."+name+".npy")
     X_cosine = gen_or_load_feats(cosine_features, h, b, "features/cosine."+name+".npy")
-
+    print("hand:",X_hand.shape)
+    print("cosine:",X_cosine.shape)
     X = np.c_[X_hand, X_polarity, X_refuting, X_overlap, X_cosine]
     return X,y
 

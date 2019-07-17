@@ -4,10 +4,8 @@ import nltk
 import numpy as np
 from sklearn import feature_extraction
 from tqdm import tqdm
+import pandas as pd
 from scipy import spatial
-from glove import Corpus, Glove
-nltk.download('punkt')
-nltk.download('wordnet')
 
 _wnl = nltk.WordNetLemmatizer()
 
@@ -212,58 +210,34 @@ def hand_features(headlines, bodies):
     return X
 
 #Cosine features
-def get_data(headlines,bodies):
-  headline_list = []
-  body_list = []
-  for i, (headline, body) in tqdm(enumerate(zip(headlines, bodies))):
-    clean_headline = clean(headline)
-    clean_body = clean(body)
-    clean_headline = get_tokenized_lemmas(clean_headline)
-    clean_body = get_tokenized_lemmas(clean_body)
-    headline_list.append(clean_headline)
-    body_list.append(clean_body)
-  return headline_list,body_list
+def get_emb():
+    df_body = pd.read_csv('/bert_emb/trainbody_bert.csv',sep=',',header=None)
+    df_head = pd.read_csv('/bert_emb/trainheadline_bert.csv',sep=',',header=None)
+    df_combine = pd.read_csv('/bert_emb/traincombined_bert.csv',sep=',',header=None)
 
-def get_embeddings(headlines, bodies):
-  headline_list,body_list = get_data(headlines, bodies)
-  #Creating glove model for headline
-  corpus_headline = Corpus()
-  corpus_headline.fit(headline_list)
-  print
-  glove_headline = Glove(no_components=300, learning_rate=0.05)
-  glove_headline.fit(corpus_headline.matrix, epochs=30, no_threads=4, verbose=True)
-  glove_headline.add_dictionary(corpus_headline.dictionary)
-  glove_headline.save('/content/drive/My Drive/glove_headline.model')
-  w2v_headline = glove_headline.load('/content/drive/My Drive/glove_headline.model')
-  embedding_matrix_headline = w2v_headline.word_vectors
-  
-  #Creating glove model fr body
-  corpus_body = Corpus()
-  corpus_body.fit(body_list)
-  glove_body = Glove(no_components=300, learning_rate=0.05)
-  glove_body.fit(corpus_body.matrix, epochs=30, no_threads=4, verbose=True)
-  glove_body.add_dictionary(corpus_body.dictionary)
-  glove_body.save('/content/drive/My Drive/glove_body.model')
-  w2v_body = glove_body.load('/content/drive/My Drive/glove_body.model')
-  embedding_matrix_body = w2v_body.word_vectors
-  
-  word_emb_hl = []
-  sen_emb_hl = []
-  for headline in headline_list:
-    for token_hl in headline:
-      word_emb_hl.append(w2v_headline.word_vectors[glove_headline.dictionary[token_hl]])
-    sen_emb_hl.append(np.sum(np.array(word_emb_hl),axis = 0))
-  word_emb_b = []
-  sen_emb_b = []
-  for body in body_list:
-    for token_b in body:
-      word_emb_b.append(w2v_body.word_vectors[glove_body.dictionary[token_b]])
-    sen_emb_b.append(np.sum(np.array(word_emb_b),axis = 0))
-  return sen_emb_hl,sen_emb_b
+    df_body.drop(df_body.index[0],inplace=True)
+    df_body.drop(df_body.columns[0],axis='columns',inplace=True)
+
+    df_head.drop(df_head.index[0],inplace=True)
+    df_head.drop(df_head.columns[0],axis='columns',inplace=True)
+
+    df_combine.drop(df_combine.columns[0],axis='columns',inplace=True)
+    df_combine.drop(df_combine.index[0],inplace=True)
+
+    bodies_emb = df_body.values.tolist()
+    headlines_emb = df_head.values.tolist()
+    combine_emb = df_combine.values.tolist()
+
+    bodies_vec = np.array(bodies_emb)
+    headlines_vec = np.array(headlines_emb)
+    combine_vec = np.array(combine_emb)
+
+    return bodies_vec,headlines_vec,combine_vec
 
 def cosine_features(headlines,bodies):
-  haedlines_vec,bodies_vec = get_embeddings(headlines,bodies)
-  X = []
-  for i in range(len(bodies_vec)):
-    X.append(spatial.distance.cosine(headlines_vec[i],bodies_vec[i]))
-  return np.array(X)
+    bodies_vec,headlines_vec,combine_vec = get_emb()
+    X = []
+    for i in range(len(headlines)):
+        X.append(spatial.distance.cosine(headlines_vec[i],bodies_vec[i]))
+    #X = np.reshape(np.array(X),(,1)
+    return np.array(X)
